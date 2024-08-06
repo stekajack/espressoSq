@@ -1,0 +1,7 @@
+# Ignore a specific file
+playground.ipynb
+quick_benchmark.cpp
+.vscode
+build
+sq_port.cpp
+
