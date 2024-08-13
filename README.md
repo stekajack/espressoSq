@@ -21,7 +21,11 @@ EspressoSq is a high-performance library for structure factor calculations, impl
 
 1. Clone the repository:
 2. Navigate to the directory:
-3. Run the setup script:
+    mkdir build
+    cd build
+    cmake ..
+    make
+3. (Optional) Run the setup script:
     python3 setup.py build_ext --inplace
 
 ## Usage
@@ -45,7 +49,6 @@ int main() {
     std::vector<std::vector<double>> particle_positions(num_particles, std::vector<double>(3));
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, box_len);
 
     for (auto &pos : particle_positions)
     {
@@ -54,7 +57,7 @@ int main() {
         pos[2] = dis(gen);
     }
 
-    std::vector<std::vector<double>> result = calculate_structure_factor_avx(particle_positions, order, box_len, M, N);
+    std::vector<std::vector<double>> result = calculate_structure_factor(particle_positions, order, box_len, M, N);
     return 0;
 }
 ```
@@ -64,7 +67,7 @@ int main() {
 After running the setup script, you can import and use EspressoSq in your Python code:
 ```python
 import espressoSq
-result = espressosq.calculate_structure_factor_avx(particle_positions, order, box_len, M, N)
+result = espressosq.calculate_structure_factor(particle_positions, order, box_len, M, N)
 
 ```
 

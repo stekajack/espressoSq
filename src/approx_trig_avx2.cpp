@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cmath>
+#ifdef ARCH_X86
 #include <immintrin.h>
+#endif
 #include <chrono>
 #include <vector>
 
@@ -142,107 +144,3 @@ __m256d sin_approx_avx2(__m256d xx)
 
     return result;
 }
-
-// int main()
-// {
-//     int n = 8;
-//     double x_values[n] = {0, M_PI / 4, M_PI / 2, 3 * M_PI / 4, M_PI, 5 * M_PI / 4, 3 * M_PI / 2, 7 * M_PI / 4};
-
-//     // Print individual values
-//     for (int i = 0; i < n; i += 4)
-//     {
-//         __m256d x = _mm256_loadu_pd(&x_values[i]);
-//         __m256d result = cos_approx_avx2(x);
-
-//         alignas(32) double results_cos[4];
-//         alignas(32) double results_sin[4];
-
-//         _mm256_store_pd(results_cos, result);
-//         result = sin_approx_avx2(x);
-//         _mm256_store_pd(results_sin, result);
-
-//         for (int j = 0; j < 4; ++j)
-//         {
-//             std::cout << "cos_approx(" << x_values[i + j] << ") = " << results_cos[j] << std::endl;
-//             std::cout << "std::cos(" << x_values[i + j] << ") = " << std::cos(x_values[i + j]) << std::endl;
-//             std::cout << std::endl;
-//             std::cout << "sin_approx(" << x_values[i + j] << ") = " << results_sin[j] << std::endl;
-//             std::cout << "std::sin(" << x_values[i + j] << ") = " << std::sin(x_values[i + j]) << std::endl;
-//         }
-//     }
-
-//     const int num_elements = 100000000;
-//     std::vector<double> values(num_elements);
-//     for (int i = 0; i < num_elements; ++i)
-//     {
-//         values[i] = static_cast<double>(i) / (num_elements - 1) * 2 * M_PI;
-//     }
-
-//     // Prepare data for AVX2
-//     alignas(32) double x_values_perf[4]; // Buffer for four double values
-//     __m256d x;
-
-//     // Measure execution time for cos_approx_avx2
-//     auto start = std::chrono::high_resolution_clock::now();
-//     for (int i = 0; i < num_elements; i += 4)
-//     {
-//         x_values_perf[0] = values[i];
-//         x_values_perf[1] = values[i + 1];
-//         x_values_perf[2] = values[i + 2];
-//         x_values_perf[3] = values[i + 3];
-//         x = _mm256_load_pd(x_values_perf);
-//         cos_approx_avx2(x);
-//     }
-//     auto end = std::chrono::high_resolution_clock::now();
-//     std::chrono::duration<double> cos_approx_duration = end - start;
-//     std::cout << "cos_approx_avx2 execution time for " << num_elements << " elements: "
-//               << cos_approx_duration.count() << " seconds\n";
-
-//     // Measure execution time for std::cos
-//     start = std::chrono::high_resolution_clock::now();
-//     for (int i = 0; i < num_elements; ++i)
-//     {
-//         std::cos(values[i]);
-//     }
-//     end = std::chrono::high_resolution_clock::now();
-//     std::chrono::duration<double> std_cos_duration = end - start;
-//     std::cout << "std::cos execution time for " << num_elements << " elements: "
-//               << std_cos_duration.count() << " seconds\n";
-
-//     return 0;
-// }
-
-// double cos_approx(double x)
-// {
-//     // Normalize x to be within the range [0, 2*M_PI]
-//     // x = fmod(x, two_pi);
-
-//     double result;
-//     int fact = 1;
-//     if (x < pi_half)
-//     {
-//         // nothing to do
-//     }
-
-//     else if (two_pi < x <= M_PI)
-//     {
-//         x = M_PI - x;
-//         fact = -1;
-//     }
-//     else if (M_PI < x <= three_pi_half)
-//     {
-//         x = x - M_PI;
-//         fact = -1;
-//     }
-//     else
-//     {
-//         x = two_pi - x;
-//     }
-//     double x2 = x * x;
-//     double x4 = x2 * x2;
-//     double x6 = x4 * x2;
-//     double x8 = x6 * x2;
-//     result = fact * (1 - x2 * factorial_inv[2] + x4 * factorial_inv[4] - x6 * factorial_inv[6] + x8 * factorial_inv[8]);
-
-//     return result;
-// }

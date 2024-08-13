@@ -4,4 +4,7 @@ quick_benchmark.cpp
 .vscode
 build
 sq_port.cpp
-
+avx_test.cpp
+build
+CMakePresets.json
+approx_trig_test.cpp

@@ -1,27 +1,32 @@
-from distutils.core import setup
+from setuptools import setup, Extension
 from Cython.Build import cythonize
-from distutils.extension import Extension
+import numpy
 import os
-import sys
 
-extensions = [
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the paths relative to the base directory
+include_dirs = [
+    os.path.join(base_dir, 'includes'),  # Directory containing header files
+    numpy.get_include()  # Directory for numpy headers
+]
+
+library_dirs = [
+    os.path.join(base_dir, 'build')  # Directory containing the compiled library
+]
+
+ext_modules = [
     Extension(
-        "espressoSq",
-        sources=[
-            "espressoSq.pyx",  # Your Cython file
-            "approx_trig_avx2.cpp",
-            "sq_avx.cpp"
-        ],
-        language="c++",
-        extra_compile_args=["-std=c++14","-g",
-            "-mavx2",
-            "-O3",
-            "-march=native"],  # Adjust based on your C++ standard
-        extra_link_args=[],
+        name="sq_avx",
+        sources=["espressoSq.pyx"],  # Cython source file
+        include_dirs=include_dirs,  # Include directories
+        libraries=["espressoSq"],  # Link against your C++ library
+        library_dirs=library_dirs,  # Path to the library files
+        language="c++",  # Indicate that this is a C++ extension
     )
 ]
 
 setup(
-    name="espressoSq",  # Replace with the actual name of your module
-    ext_modules=cythonize(extensions),
+    name="sq_avx",
+    ext_modules=cythonize(ext_modules),
 )
