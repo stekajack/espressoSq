@@ -66,7 +66,7 @@ int main() {
 
 After running the setup script, you can import and use EspressoSq in your Python code:
 ```python
-import espressoSq
+import sq_avx
 result = espressosq.calculate_structure_factor(particle_positions, order, box_len, M, N)
 
 ```
