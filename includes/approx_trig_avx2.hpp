@@ -1,5 +1,6 @@
-#include <immintrin.h>
+#pragma once
+#include "simd_intrinsics.hpp"
 
 // Function prototypes for approximate trigonometric functions
-__m256d cos_approx_avx2(__m256d xx);
-__m256d sin_approx_avx2(__m256d xx);
+simd_double_t cos_approx_simd(simd_double_t xx);
+simd_double_t sin_approx_simd(simd_double_t xx);

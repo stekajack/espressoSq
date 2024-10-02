@@ -13,32 +13,32 @@
 #include <cassert>
 
 #ifdef SUPPORTS_AVX2
-void kernel_avx2(const double *particle_positions_x, const double *particle_positions_y, const double *particle_positions_z, int num_particles, double twoPI_L, const double *comb, __m256d &C_sum, __m256d &S_sum)
+void kernel_avx2(const double *particle_positions_x, const double *particle_positions_y, const double *particle_positions_z, int num_particles, double twoPI_L, const double *comb, simd_double_t &C_sum, simd_double_t &S_sum)
 {
     assert(num_particles % 4 == 0);
 
-    __m256d twoPI_L_vec = _mm256_set1_pd(twoPI_L);
-    __m256d comb_x = _mm256_set1_pd(comb[0]);
-    __m256d comb_y = _mm256_set1_pd(comb[1]);
-    __m256d comb_z = _mm256_set1_pd(comb[2]);
+    simd_double_t twoPI_L_vec = simd_set1_pd(twoPI_L);
+    simd_double_t comb_x = simd_set1_pd(comb[0]);
+    simd_double_t comb_y = simd_set1_pd(comb[1]);
+    simd_double_t comb_z = simd_set1_pd(comb[2]);
 
     for (int i = 0; i < num_particles; i += 4)
     {
-        __m256d pos_x = _mm256_load_pd(&particle_positions_x[i]);
-        __m256d pos_y = _mm256_load_pd(&particle_positions_y[i]);
-        __m256d pos_z = _mm256_load_pd(&particle_positions_z[i]);
+        simd_double_t pos_x = simd_load_pd(&particle_positions_x[i]);
+        simd_double_t pos_y = simd_load_pd(&particle_positions_y[i]);
+        simd_double_t pos_z = simd_load_pd(&particle_positions_z[i]);
 
-        __m256d scalar_product = _mm256_mul_pd(comb_x, pos_x);
-        scalar_product = _mm256_add_pd(scalar_product, _mm256_mul_pd(comb_y, pos_y));
-        scalar_product = _mm256_add_pd(scalar_product, _mm256_mul_pd(comb_z, pos_z));
+        simd_double_t scalar_product = simd_mul_pd(comb_x, pos_x);
+        scalar_product = simd_add_pd(scalar_product, simd_mul_pd(comb_y, pos_y));
+        scalar_product = simd_add_pd(scalar_product, simd_mul_pd(comb_z, pos_z));
 
-        scalar_product = _mm256_mul_pd(scalar_product, twoPI_L_vec);
+        scalar_product = simd_mul_pd(scalar_product, twoPI_L_vec);
 
-        __m256d cos_val = cos_approx_avx2(scalar_product);
-        __m256d sin_val = sin_approx_avx2(scalar_product);
+        simd_double_t cos_val = cos_approx_avx2(scalar_product);
+        simd_double_t sin_val = sin_approx_avx2(scalar_product);
 
-        C_sum = _mm256_add_pd(C_sum, cos_val);
-        S_sum = _mm256_add_pd(S_sum, sin_val);
+        C_sum = simd_add_pd(C_sum, cos_val);
+        S_sum = simd_add_pd(S_sum, sin_val);
     }
 }
 #endif
@@ -155,14 +155,14 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
         {
             alignas(64) double comb_novec[3] = {static_cast<double>(comb[0]), static_cast<double>(comb[1]), static_cast<double>(comb[2])};
 
-            __m256d C_sum_novec = _mm256_setzero_pd();
-            __m256d S_sum_novec = _mm256_setzero_pd();
+            simd_double_t C_sum_novec = simd_setzero_pd();
+            simd_double_t S_sum_novec = simd_setzero_pd();
 
             kernel_avx2(particle_positions_x, particle_positions_y, particle_positions_z, effective_size, twoPI_L, comb_novec, C_sum_novec, S_sum_novec);
             alignas(64) double C_sum_store[4];
             alignas(64) double S_sum_store[4];
-            _mm256_store_pd(C_sum_store, C_sum_novec);
-            _mm256_store_pd(S_sum_store, S_sum_novec);
+            simd_store_pd(C_sum_store, C_sum_novec);
+            simd_store_pd(S_sum_store, S_sum_novec);
             C_sum = C_sum_store[0] + C_sum_store[1] + C_sum_store[2] + C_sum_store[3];
             S_sum = S_sum_novec[0] + S_sum_novec[1] + S_sum_novec[2] + S_sum_novec[3];
 
