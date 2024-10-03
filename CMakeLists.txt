@@ -17,21 +17,21 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
     if(COMPILER_SUPPORTS_AVX2)
         message(STATUS "Compiler supports AVX2")
         add_definitions(-DSUPPORTS_AVX2)
+        add_definitions(-DSUPPORTS_SIMD)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
         set(SOURCE_FILES_AVX2 src/approx_trig_avx2.cpp)
     else()
         message(STATUS "Compiler does not support AVX2")
     endif()
-endif()
 
-
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64|ARM")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64|ARM")
     message(STATUS "CPU architecture is ARM (AArch64)")
     message(STATUS "Compiler supports NEON.")
 
     # NEON is automatically available on AArch64
     add_definitions(-DARCH_ARM)
     add_definitions(-DSUPPORTS_NEON)
+    add_definitions(-DSUPPORTS_SIMD)
     set(SOURCE_FILES_AVX2 src/approx_trig_avx2.cpp)
 
 endif()

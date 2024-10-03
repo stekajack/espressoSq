@@ -81,7 +81,7 @@ simd_double_t avx2_fmod(simd_double_t numer, simd_double_t denom)
  * @param xx Input angle(s) in radians (as an AVX2 vector of doubles).
  * @return simd_double_t The cosine approximation of the input values.
  */
-simd_double_t cos_approx_avx2(simd_double_t xx)
+simd_double_t cos_approx_simd(simd_double_t xx)
 {
     simd_double_t x = avx2_fmod(xx, TWO_PI);
     simd_double_t mask_neg = simd_cmp_pd(x, simd_set1_pd(0.0));
@@ -142,7 +142,7 @@ simd_double_t cos_approx_avx2(simd_double_t xx)
  * @param xx Input angle(s) in radians (as an AVX2 vector of doubles).
  * @return simd_double_t The cosine approximation of the input values.
  */
-simd_double_t sin_approx_avx2(simd_double_t xx)
+simd_double_t sin_approx_simd(simd_double_t xx)
 {
     simd_double_t x = avx2_fmod(xx, TWO_PI);
     simd_double_t mask_neg = simd_cmp_pd(x, simd_set1_pd(0.0));

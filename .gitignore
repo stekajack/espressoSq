@@ -8,3 +8,6 @@ avx_test.cpp
 build
 CMakePresets.json
 approx_trig_test.cpp
+avx_test
+espressoSq.cpp
+*.so
