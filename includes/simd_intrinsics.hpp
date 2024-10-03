@@ -45,6 +45,6 @@ typedef float64x2_t simd_double_t;
 #define simd_round_pd(x) vcvtq_f64_s64(vcvtq_s64_f64(x))
 #define simd_andnot_pd(v1, v2) vreinterpretq_f64_u64(vbicq_u64(vreinterpretq_u64_f64(v1), vreinterpretq_u64_f64(v2)))
 #define simd_or_pd(v1, v2) vreinterpretq_f64_u64(vorrq_u64(vreinterpretq_u64_f64(v1), vreinterpretq_u64_f64(v2)))
-#define simd_setzero_pd vdupq_n_f64(0.0)
+#define simd_setzero_pd() vdupq_n_f64(0.0)
 
 #endif
