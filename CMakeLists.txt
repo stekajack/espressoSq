@@ -4,7 +4,7 @@ project(espressoSq VERSION 0.1.0 LANGUAGES C CXX)
 set(SOURCE_FILES_COMMON src/sq_avx.cpp)
 set(SOURCE_FILES_AVX2 "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O3 -march=native -fPIC")
 
 include(CheckCXXCompilerFlag)
 

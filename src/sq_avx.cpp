@@ -35,6 +35,7 @@
 #include <chrono>
 #include <iostream>
 #include <cassert>
+#include <omp.h> // Include OpenMP header
 
 #ifdef SUPPORTS_SIMD
 /**
@@ -205,7 +206,7 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
         particle_positions_y[i] = particle_positions[i][1];
         particle_positions_z[i] = particle_positions[i][2];
     }
-
+#pragma omp parallel for private(C_sum, S_sum)
     for (int n : indices)
     {
         // Generate all combinations of i, j, k corresponding to n
@@ -289,7 +290,7 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<int> indices = get_wavevector_indices_logdist(order_sq, N);
-
+#pragma omp parallel for num_threads(4) private(C_sum, S_sum)
     for (int n : indices)
     {
         // Generate all combinations of i, j, k corresponding to n
