@@ -23,6 +23,8 @@ ext_modules = [
         libraries=["espressoSq"],  # Link against your C++ library
         library_dirs=library_dirs,  # Path to the library files
         language="c++",  # Indicate that this is a C++ extension
+        extra_compile_args=["-fopenmp"],
+        extra_link_args=["-fopenmp"],
     )
 ]
 
