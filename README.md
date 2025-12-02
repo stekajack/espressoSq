@@ -63,8 +63,8 @@ int main() {
     const unsigned int num_particles = 9999;
     const unsigned int order = 100;
     const double box_len = 10.0;
-    const unsigned int M = 100;
-    const unsigned int N = 100;
+    const unsigned int orientations_per_wavevector = 100;
+    const unsigned int subsample_wavevectors = 100;
 
     // Create random particle positions
     std::vector<std::vector<double>> particle_positions(num_particles, std::vector<double>(3));
@@ -78,7 +78,7 @@ int main() {
         pos[2] = dis(gen);
     }
 
-    auto result = calculate_structure_factor(particle_positions, order, box_len, M, N);
+    auto result = calculate_structure_factor(particle_positions, order, box_len, orientations_per_wavevector, subsample_wavevectors);
     return 0;
 }
 ```
@@ -93,7 +93,13 @@ After building the Python extension, you can use it like this:
 import sq_avx
 
 # particle_positions should be a list of 3D positions
-result = sq_avx.calculate_structure_factor(particle_positions, order, box_len, M, N)
+result = sq_avx.calculate_structure_factor(
+    particle_positions,
+    order,
+    box_len,
+    orientations_per_wavevector,
+    subsample_wavevectors,
+)
 ```
 
 ---

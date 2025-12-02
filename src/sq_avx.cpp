@@ -34,6 +34,8 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
+#include <cstdio>
 #include <cassert>
 
 #ifdef SUPPORTS_SIMD
@@ -83,14 +85,14 @@ void kernel_avx2(const double *particle_positions_x, const double *particle_posi
  * @brief Generate a list of qs distributed logarithmically.
  *
  * @param order_sq Square of the maximum order of the wave vector.
- * @param N Number of desired indices.
+ * @param subsample_wavevectors Number of desired wavevector indices (log distributed).
  * @return std::vector<int> List of wavevector indices.
  */
-std::vector<int> get_wavevector_indices_logdist(int order_sq, int N)
+std::vector<int> get_wavevector_indices_logdist(int order_sq, long unsigned int subsample_wavevectors)
 {
     std::vector<int> distances;
     std::vector<int> indices(order_sq);
-    int set_length = order_sq / N;
+    int set_length = order_sq / subsample_wavevectors;
     std::generate(indices.begin(), indices.end(), [n = 0]() mutable
                   { return n++; });
 
@@ -135,19 +137,26 @@ std::vector<int> get_wavevector_indices_logdist(int order_sq, int N)
  * @param n The target sum of squares.
  * @param max_no_combinations Maximum number of combinations allowed.
  * @param rng_hnld Random number generator handle.
+ * @param axis_mask Mask controlling which axes are allowed to vary (true = vary, false = fixed to 0).
  * @return std::vector<std::vector<int>> List of index combinations.
  */
-std::vector<std::vector<int>> get_index_combinations(int n, int max_no_combinations, std::mt19937 rng_hnld)
+std::vector<std::vector<int>> get_index_combinations(int n, int max_no_combinations, std::mt19937 rng_hnld, const std::vector<bool> &axis_mask)
 {
     std::vector<std::vector<int>> combinations;
 
     int nsq = static_cast<int>(std::ceil(std::sqrt(n)));
+    int i_start = 0;
+    int i_end = axis_mask[0] ? nsq : 0;
+    int j_start = axis_mask[1] ? -nsq : 0;
+    int j_end = axis_mask[1] ? nsq : 0;
+    int k_start = axis_mask[2] ? -nsq : 0;
+    int k_end = axis_mask[2] ? nsq : 0;
     // Generate all possible (i, j, k) combinations such that i^2 + j^2 + k^2 == n
-    for (int i = 0; i <= nsq; i++)
+    for (int i = i_start; i <= i_end; i++)
     {
-        for (int j = -nsq; j <= nsq; j++)
+        for (int j = j_start; j <= j_end; j++)
         {
-            for (int k = -nsq; k <= nsq; k++)
+            for (int k = k_start; k <= k_end; k++)
             {
                 if (i * i + j * j + k * k == n)
                 {
@@ -174,11 +183,12 @@ std::vector<std::vector<int>> get_index_combinations(int n, int max_no_combinati
  * @param particle_positions Vector of particle positions.
  * @param order Maximum order of wave vector.
  * @param box_len Length of the simulation box.
- * @param M Maximum number of combinations.
- * @param N Number of wave vector indices.
+ * @param orientations_per_wavevector Maximum number of index combinations (orientations) sampled per |q|.
+ * @param subsample_wavevectors Number of wave vector magnitudes sampled (log-distributed subsampling).
+ * @param axis_mask Mask controlling which axes are allowed to vary (true = vary, false = fixed to 0).
  * @return std::vector<std::vector<double>> Wavevectors and their corresponding intensities.
  */
-std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N)
+std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int orientations_per_wavevector, long unsigned int subsample_wavevectors, const std::vector<bool> &axis_mask = std::vector<bool>{true, true, true})
 {
     // Constants for calculations
     double C_sum = 0.0, S_sum = 0.0;
@@ -189,7 +199,24 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
     // Random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::vector<int> indices = get_wavevector_indices_logdist(order_sq, N);
+    gen.discard(1'000'000);
+    if (subsample_wavevectors == 0)
+    {
+        throw std::invalid_argument("calculate_structure_factor: subsample_wavevectors must be >= 1");
+    }
+    if (axis_mask.size() != 3)
+    {
+        throw std::invalid_argument("calculate_structure_factor: axis_mask must have exactly 3 elements");
+    }
+
+    bool all_true = std::all_of(axis_mask.begin(), axis_mask.end(),
+                                [](bool x)
+                                { return x; });
+    if (!all_true && subsample_wavevectors > 1)
+    {
+        std::cerr << "Warning: directional axis_mask with subsample_wavevectors > 1 may skip many q bins due to subsampling.\n";
+    }
+    std::vector<int> indices = get_wavevector_indices_logdist(order_sq, subsample_wavevectors);
 
     auto effective_size = (particle_positions.size() % SIMD_VECTOR_WIDTH != 0) ? (particle_positions.size() / SIMD_VECTOR_WIDTH) * SIMD_VECTOR_WIDTH : particle_positions.size();
 
@@ -209,7 +236,7 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
     for (int n : indices)
     {
         // Generate all combinations of i, j, k corresponding to n
-        auto combinations = get_index_combinations(n, M, gen);
+        auto combinations = get_index_combinations(n, orientations_per_wavevector, gen, axis_mask);
         for (const auto &comb : combinations)
         {
             alignas(64) double comb_novec[3] = {static_cast<double>(comb[0]), static_cast<double>(comb[1]), static_cast<double>(comb[2])};
@@ -273,11 +300,12 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
  * @param particle_positions Vector of particle positions.
  * @param order Maximum order of wave vector.
  * @param box_len Length of the simulation box.
- * @param M Maximum number of combinations.
- * @param N Number of wave vector indices.
+ * @param orientations_per_wavevector Maximum number of index combinations (orientations) sampled per |q|.
+ * @param subsample_wavevectors Number of wave vector magnitudes sampled (log-distributed subsampling).
+ * @param axis_mask Mask controlling which axes are allowed to vary (true = vary, false = fixed to 0).
  * @return std::vector<std::vector<double>> Wavevectors and their corresponding intensities.
  */
-std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N)
+std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int orientations_per_wavevector, long unsigned int subsample_wavevectors, const std::vector<bool> &axis_mask = std::vector<bool>{true, true, true})
 {
     // Constants for calculations
     double C_sum = 0.0, S_sum = 0.0;
@@ -288,12 +316,29 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
     // Random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::vector<int> indices = get_wavevector_indices_logdist(order_sq, N);
+    gen.discard(1'000'000);
+    if (subsample_wavevectors == 0)
+    {
+        throw std::invalid_argument("calculate_structure_factor: subsample_wavevectors must be >= 1");
+    }
+    if (axis_mask.size() != 3)
+    {
+        throw std::invalid_argument("calculate_structure_factor: axis_mask must have exactly 3 elements");
+    }
+
+    bool all_true = std::all_of(axis_mask.begin(), axis_mask.end(),
+                                [](bool x)
+                                { return x; });
+    if (!all_true && subsample_wavevectors > 1)
+    {
+        std::cerr << "Warning: directional axis_mask with subsample_wavevectors > 1 may skip many q bins due to subsampling.\n";
+    }
+    std::vector<int> indices = get_wavevector_indices_logdist(order_sq, subsample_wavevectors);
 
     for (int n : indices)
     {
         // Generate all combinations of i, j, k corresponding to n
-        auto combinations = get_index_combinations(n, M, gen);
+        auto combinations = get_index_combinations(n, orientations_per_wavevector, gen, axis_mask);
 
         for (const auto &comb : combinations)
         {
