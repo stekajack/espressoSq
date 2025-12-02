@@ -5,12 +5,13 @@ from libcpp cimport bool
 cimport cython
 
 cdef extern from "sq_avx.hpp":
-    vector[vector[double]] calculate_structure_factor_cpp "calculate_structure_factor" (vector[vector[double]], int, double, long unsigned int, long unsigned int, vector[bool])
+
+    vector[vector[double]] calculate_structure_factor_cpp "calculate_structure_factor" (vector[vector[double]], int, double, long unsigned int, long unsigned int, vector[bool], int)
 
 # Define a Python wrapper function    
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def calculate_structure_factor(vector[vector[double]] particle_positions, int order, double box_len, int orientations_per_wavevector, int subsample_wavevectors, vector[bool] axis_mask=[True,True,True]):
+def calculate_structure_factor(vector[vector[double]] particle_positions, int order, double box_len, int orientations_per_wavevector, int subsample_wavevectors, vector[bool] axis_mask=[True,True,True], nthreads=1):
     """
     Calculate S(q) for the provided particle positions.
 
@@ -28,6 +29,7 @@ def calculate_structure_factor(vector[vector[double]] particle_positions, int or
         Number of logarithmically distributed |q| magnitudes to evaluate.
     axis_mask : vector[bool], optional
         Axis selector for directional structure factors.
+    nthreads : int, optional
+        Number of threads to use for computation.
     """
-    return calculate_structure_factor_cpp(particle_positions, order, box_len, orientations_per_wavevector, subsample_wavevectors, axis_mask)
-
+    return calculate_structure_factor_cpp(particle_positions, order, box_len, orientations_per_wavevector, subsample_wavevectors, axis_mask, nthreads)

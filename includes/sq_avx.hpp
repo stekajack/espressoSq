@@ -13,6 +13,7 @@
  * @param orientations_per_wavevector The number of index combinations (orientations) sampled per wavevector magnitude.
  * @param subsample_wavevectors The number of logarithmically distributed wavevectors to evaluate.
  * @param axis_mask Mask controlling which axes are allowed to vary (true = vary, false = fixed to 0).
+ * @param nthreads Number of OpenMP threads to use per call (>=1).
  *
  * @return A 2D array containing (q, S(q)).
  *
@@ -20,4 +21,4 @@
  *
  * @warning Make sure you understand what you are doing, the code does not check for logical mistakes.
  */
-std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int orientations_per_wavevector, long unsigned int subsample_wavevectors, const std::vector<bool> &axis_mask = std::vector<bool>{true, true, true});
+std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int orientations_per_wavevector, long unsigned int subsample_wavevectors, const std::vector<bool> &axis_mask = std::vector<bool>{true, true, true}, int nthreads = 1);
