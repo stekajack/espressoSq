@@ -12,6 +12,7 @@
  * @param box_len The length of the simulation box along each dimension. Assumes a cubic box.
  * @param M The number of wavevectors to use in scattering in the discretized wavevector space.
  * @param N The number of qs to calculate.
+ * @param nthreads Number of OpenMP threads to use per call (>=1).
  *
  * @return A 2D array containing (q, S(q)).
  *
@@ -19,4 +20,4 @@
  *
  * @warning Make sure you understand what you are doing, the code does not check for logical mistakes.
  */
-std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N);
+std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N, int nthreads = 1);

@@ -179,7 +179,7 @@ std::vector<std::vector<int>> get_index_combinations(int n, int max_no_combinati
  * @param N Number of wave vector indices.
  * @return std::vector<std::vector<double>> Wavevectors and their corresponding intensities.
  */
-std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N)
+std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N, int nthreads)
 {
     // Constants for calculations
     double C_sum = 0.0, S_sum = 0.0;
@@ -206,8 +206,8 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
         particle_positions_y[i] = particle_positions[i][1];
         particle_positions_z[i] = particle_positions[i][2];
     }
-    int nthreads = std::max(omp_get_num_procs() - 2, 1);
-    #pragma omp parallel for num_threads(nthreads) private(C_sum, S_sum)    
+    int threads = std::max(1, std::min(nthreads, omp_get_num_procs()));
+    #pragma omp parallel for num_threads(threads) private(C_sum, S_sum)    
     for (int n : indices)
     {
         // Generate all combinations of i, j, k corresponding to n
@@ -279,7 +279,7 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
  * @param N Number of wave vector indices.
  * @return std::vector<std::vector<double>> Wavevectors and their corresponding intensities.
  */
-std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N)
+std::vector<std::vector<double>> calculate_structure_factor(const std::vector<std::vector<double>> &particle_positions, long unsigned int order, double box_len, long unsigned int M, long unsigned int N, int nthreads)
 {
     // Constants for calculations
     double C_sum = 0.0, S_sum = 0.0;
@@ -291,8 +291,8 @@ std::vector<std::vector<double>> calculate_structure_factor(const std::vector<st
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<int> indices = get_wavevector_indices_logdist(order_sq, N);
-    int nthreads = std::max(omp_get_num_procs() - 2, 1);
-    #pragma omp parallel for num_threads(nthreads) private(C_sum, S_sum)
+    int threads = std::max(1, std::min(nthreads, omp_get_num_procs()));
+    #pragma omp parallel for num_threads(threads) private(C_sum, S_sum)
     for (int n : indices)
     {
         // Generate all combinations of i, j, k corresponding to n

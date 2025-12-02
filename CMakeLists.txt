@@ -4,9 +4,10 @@ project(espressoSq VERSION 0.1.0 LANGUAGES C CXX)
 set(SOURCE_FILES_COMMON src/sq_avx.cpp)
 set(SOURCE_FILES_AVX2 "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O3 -march=native -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -fPIC")
 
 include(CheckCXXCompilerFlag)
+find_package(OpenMP)
 
 # Check for AVX or AVX2 support first. Rn library only works with x86 intrinsics, but i plan to add arm support with NEON in the future.
 check_cxx_compiler_flag("-mavx2" COMPILER_SUPPORTS_AVX2)
@@ -43,3 +44,10 @@ add_library(espressoSq ${SOURCE_FILES_ALL})
 
 # Specify the include directories
 target_include_directories(espressoSq PUBLIC ${CMAKE_SOURCE_DIR}/includes)
+
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found, enabling flags")
+    target_link_libraries(espressoSq PUBLIC OpenMP::OpenMP_CXX)
+else()
+    message(WARNING "OpenMP not found; building without OpenMP support")
+endif()
