@@ -19,14 +19,14 @@
 
 ### 🔧 Prerequisites
 
-* A working **GCC compiler**
-* **Python** with **Cython** installed
+* A working **GCC** or compatible C++ compiler
+* A Python environment with `pip`
 
-### 📦 Build Steps
+### 📦 Build and install
 
-1. **Clone the repository**
+1. **Clone the repository**.
 
-2. **Create a build directory and compile the library**
+2. **Compile the C++ library**:
 
    ```bash
    mkdir build
@@ -35,18 +35,32 @@
    make
    ```
 
-3. **(Optional) Build Python wrapper**
-   To make the package importable in Python:
+   CMake builds `build/libespressoSq.a`. On supported x86 hosts the configured
+   library uses the AVX2/SIMD flags selected by CMake.
+
+3. **Install the Python extension into the active environment**:
 
    ```bash
-   python3 setup.py build_ext --inplace
+   python -m pip install -e .
    ```
 
-   > ℹ️ You may need to install `setuptools`:
+   This compiles the Cython wrapper and links it against the existing
+   `build/libespressoSq.a`; it does **not** rerun CMake or rebuild the C++
+   library. The extension is then importable as `sq_avx` from any working
+   directory.
 
-   ```bash
-   pip3 install setuptools
-   ```
+   After changing the C++ implementation or moving to a machine with different
+   CPU capabilities, rerun step 2 before reinstalling the wrapper.
+
+#### Local-only alternative
+
+```bash
+python setup.py build_ext --inplace
+```
+
+This creates `sq_avx` in the repository directory only. It is importable when
+that directory is on Python's import path (for example, when running Python
+from the repository); it is not installed into the active environment.
 
 ---
 
